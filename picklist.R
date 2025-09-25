@@ -2,11 +2,23 @@
 #'
 #' @description Generates a picklist from an experiment map and a source plate map, for use in the Beckmann Echo software suite
 #'
-#' @param cols Vector of plate column numbers to consider for the experiment.
-#' @param rows Vector of plate row numbers to consider for the experiment.
-#' @param ... Variables to combine for the experiment.
-#' @param seed Random seed for designation of wells to each condition.
+#' @param map Experiment map to follow
+#' @param src_plate Plate map of the source plate(s) to use for this dispense. Should be a single table.
+#' @param xfer_vol One of the following:
+#' Value of volume to dispense (in nL)
+#' Vector of volumes to dispense, of length == nrow(map)
+#' Name of a column in `map` corresponding to that vector
 #' 
+#' @param variables String or vector of strings with the name of the columns in `src_plate` to use for matching
+#'
+#' @param dest_plate Name to assign to the Destination Plate, or the name of the column in the `map` containing the Destination Plate Name
+#'
+#' @param src_plate_name Name of 'Source Plate Name' column in src_plate, or Name to be assigned
+#'
+#' @param src_plate_type Name of 'Destination Plate type' column in src_plate, or value to be assigned. 'DMSO' and 'Water' are interpreted readily for a 384PP plate.
+#'
+#' 
+#' @param src_well Name of Source Well column in src_plate
 #'
 #' @return A tibble containing all possible combinations of the Variables in the input, and a random selection of wells assigned from the area designated by cols + rows
 #'
@@ -18,9 +30,6 @@
 #'
 #' testmath(4)
 
-
-
-#Create picklist for desired variable(s)
 picklist <- function(map, #plate map
                      src_plate,
                      xfer_vol, #Name of 'Transfer Volume' column in map,
@@ -28,29 +37,29 @@ picklist <- function(map, #plate map
                                         # or vector of values to be assigned
                      variables, #String or vector of strings with the names of the variables to include
                      dest_plate = "Dest_Plate_Name", #Name of 'Destination Plate Name' column in map, or value to be assigned
-                     src_plate_name = "Src_Plate_Name", #Name of 'Source Plate Name' column in src_plate, or value to be assigned
-                     src_plate_type = "DMSO",#Name of 'Destination Plate type' column in src_plate, or value to be assigned
-                     src_well = "Well" #Name of Source Well column in src_plate
+                     src_plate_name = "Src_Plate_Name", #
+                     src_plate_type = "DMSO",#
+                     src_well = "Well" #
                      ){
     dplyr::mutate(map, Dest_Well = Well) %>%
         dplyr::select(all_of(variables), Dest_Well) %>%
         dplyr::left_join(src_plate, by = variables) -> pl
 
     if (nrow(pl) > nrow(map)) { #Check if source samples have multiple wells assigned
-        print("Some source variables have multiple wells; Corresponding Source Wells were evenly distributed")
+        print("Some Source variables have multiple wells; Corresponding Source Wells were evenly distributed")
         
         dplyr::mutate(map, Dest_Well = Well) %>%
-            dplyr::select(all_of(variables), Dest_Well) %>%  
-            group_by_at(variables) %>%
-            mutate(row_idx = row_number()) %>%
-            left_join(src_plate %>% 
-                      group_by_at(variables) %>%
-                      mutate(source_idx = row_number()), 
+            dplyr::select(dplyr::all_of(variables), Dest_Well) %>%  
+            dplyr::group_by_at(variables) %>%
+            dplyr::mutate(row_idx = row_number()) %>%
+            dplyr::left_join(src_plate %>% 
+                      dplyr::group_by_at(variables) %>%
+                      dplyr::mutate(source_idx = row_number()), 
                       by = variables, relationship = "many-to-many") %>%
-            mutate(match_idx = (row_idx - 1) %% n_distinct(source_idx) + 1) %>% #Distribute redundant source wells among the destination wells
-            filter(source_idx == match_idx) %>%
-            ungroup()%>%
-            select(!c(row_idx, source_idx, match_idx)) -> pl
+            dplyr::mutate(match_idx = (row_idx - 1) %% dplyr::n_distinct(source_idx) + 1) %>% #Distribute redundant source wells among the destination wells
+            dplyr::filter(source_idx == match_idx) %>%
+            dplyr::ungroup()%>%
+            dplyr::select(!c(row_idx, source_idx, match_idx)) -> pl
     }
     
     if( ! dest_plate %in% names(map)){ 
@@ -85,73 +94,3 @@ picklist <- function(map, #plate map
     return(pl)
 }
 
-backfill <- function(pl, backfill_wells,
-                     src_plate_name = "Src_Plate_Name", #Name of column containing plate name, if only 1 source plate is used, or name of Control plate if many
-                     xfer_vol = "Transfer_Volume",
-                     src_well = "Src_Well"){
-    maxvol = max(pl[[xfer_vol]])
-    pl2 = pl
-    pl2[[xfer_vol]] = maxvol - pl2[[xfer_vol]]
-    pl2 = pl2[pl2[[xfer_vol]] > 2.4,]
-    pl2[[src_well]] = rep_len(backfill_wells, length.out=nrow(pl2))
-
-    if (src_plate_name == "Src_Plate_Name"){ #Little loop to keep default source plate name
-        if(length(unique(pl[[src_plate_name]])) == 1){
-            pl2$Src_Plate_Name = unique(pl[[src_plate_name]])}
-        else {stop("Multiple Source Plates given but none specified")}
-    }
-    else{ pl2$Src_Plate_Name = src_plate_name} # But to allow specifying a control source plate                        
-    pl2 = rbind(pl, pl2)
-    return(pl2)
-}
-
-chk_vol <- function(pl){
-    group_by(pl, Src_Well ) %>%
-        summarise(total = sum(Transfer_Volume))
-}
-
-#Visualize selected area
-plot_area <- function(cols, rows, plate_format = 384){
-        if (plate_format == 6) {
-        x = 3
-        y = 2} else if (plate_format == 24) {
-        x = 6
-        y = 4} else if (plate_format == 96) {
-        x = 12
-        y = 8} else if (plate_format == 384) {
-        x = 24
-        y = 16} else if (plate_format == 1536){
-        x = 48
-        y = 32} else {print("Unknown plate format")}
-
-        plate = tidyr::crossing(cols, rows) %>%
-            mutate(Selected = TRUE) %>%
-            right_join(tidyr::crossing(cols = c(1:x), rows = c(1:y))) %>%
-            mutate(Selected = tidyr::replace_na(Selected, FALSE)) %>%
-            mutate(rows = LETTERS[rows])
-
-        ggplot(plate, aes(x = cols, y = rows, fill = Selected)) + geom_raster() + scale_y_discrete(limits = rev)
-}
-
-       
-
-
-
-
-
-
-
-
-
-##To change well notation formats
-pad_well <- function(Well){   #Add padding 0 to make all well names the same length
-    col = gsub("\\D", "", Well)
-    row = gsub("\\d", "", Well)
-    paste0(row, stringr::str_pad(col, 2, "left", "0"))
-}
-
-unpad_well <- function(Well) {    #Remove padding zeros
-    col = as.numeric(gsub("\\D", "", Well))
-    row = gsub("\\d", "", Well)
-    paste0(row, col)
-}
