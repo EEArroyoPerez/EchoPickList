@@ -8,7 +8,7 @@
 #' 
 #' @param src_plate_name Name of source plate containing the back-fill fluid, in case multiple source plates were used to generate the picklist
 #'
-#' @return A tibble made up of the original picklist, with rows containing backfill volume appended at the end.
+#' @return A tibble containing back-filling coordinates for the picklist provided, bringing every well to the maximum volume in the picklist.
 #'
 #' @export
 #'
@@ -33,7 +33,7 @@ backfill <- function(pl, backfill_wells,
         else {stop("Multiple Source Plates given but none specified")}
     }
     else{ pl2$Src_Plate_Name = src_plate_name} # But to allow specifying a control source plate                        
-    pl2 = rbind(pl, pl2)
+    #pl2 = rbind(pl, pl2)
     return(pl2)
 }
 
