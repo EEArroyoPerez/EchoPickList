@@ -28,7 +28,6 @@
 #'
 #' @examples
 #'
-#' testmath(4)
 
 picklist <- function(map, #plate map
                      src_plate,
@@ -36,61 +35,62 @@ picklist <- function(map, #plate map
                                         #or value to be assigned,
                                         # or vector of values to be assigned
                      variables, #String or vector of strings with the names of the variables to include
-                     dest_plate = "Dest_Plate_Name", #Name of 'Destination Plate Name' column in map, or value to be assigned
-                     src_plate_name = "Src_Plate_Name", #
+                     dest_plate = "DestPlateName", #Nabme of 'Destination Plate Name' column in map, or value to be assigned
+                     src_plate_name = "SrcPlateName", #
                      src_plate_type = "DMSO",#
                      src_well = "Well" #
                      ){
-    dplyr::mutate(map, Dest_Well = Well) %>%
-        dplyr::select(all_of(variables), Dest_Well) %>%
-        dplyr::left_join(src_plate, by = variables) -> pl
+  dplyr::mutate(map, DestWell = Well) %>%
+        dplyr::select(all_of(variables), DestWell) %>%
+        dplyr::left_join(src_plate, by = variables, relationship = "many-to-many") -> pl
 
     if (nrow(pl) > nrow(map)) { #Check if source samples have multiple wells assigned
-        print("Some Source variables have multiple wells; Corresponding Source Wells were evenly distributed")
+        warning("Some source variables have multiple wells; Corresponding Source Wells were evenly distributed")
         
-        dplyr::mutate(map, Dest_Well = Well) %>%
-            dplyr::select(dplyr::all_of(variables), Dest_Well) %>%  
-            dplyr::group_by_at(variables) %>%
-            dplyr::mutate(row_idx = row_number()) %>%
-            dplyr::left_join(src_plate %>% 
-                      dplyr::group_by_at(variables) %>%
-                      dplyr::mutate(source_idx = row_number()), 
+        dplyr::mutate(map, DestWell = Well) %>%
+            dplyr::select(all_of(variables), DestWell) %>%  
+            group_by_at(variables) %>%
+            mutate(row_idx = row_number()) %>%
+            left_join(src_plate %>% 
+                      group_by_at(variables) %>%
+                      mutate(source_idx = row_number()), 
                       by = variables, relationship = "many-to-many") %>%
-            dplyr::mutate(match_idx = (row_idx - 1) %% dplyr::n_distinct(source_idx) + 1) %>% #Distribute redundant source wells among the destination wells
-            dplyr::filter(source_idx == match_idx) %>%
-            dplyr::ungroup()%>%
-            dplyr::select(!c(row_idx, source_idx, match_idx)) -> pl
+            mutate(match_idx = (row_idx - 1) %% n_distinct(source_idx) + 1) %>% #Distribute redundant source wells among the destination wells
+            filter(source_idx == match_idx) %>%
+            ungroup()%>%
+            select(!c(row_idx, source_idx, match_idx)) -> pl
     }
     
     if( ! dest_plate %in% names(map)){ 
-        pl$Dest_Plate_Name = dest_plate} #dest_plate can be the name to be assigned to the destination plates, 
-    else {pl$Dest_Plate_Name = map[[dest_plate]]} #or the name of the column containing the destination plate name
+        pl$DestPlateName = dest_plate} #dest_plate can be the name to be assigned to the destination plates, 
+    else {pl$DestPlateName = map[[dest_plate]]} #or the name of the column containing the destination plate name
 
     if( ! src_plate_name %in% names(src_plate)){ 
-        pl$Src_Plate_Name = src_plate_name}
-     else {pl$Src_Plate_Name = pl[[src_plate_name]]} 
+        pl$SrcPlateName = src_plate_name}
+     else {pl$SrcPlateName = pl[[src_plate_name]]} 
      
     if( ! src_plate_type %in% names(src_plate)){ 
-        pl$Src_Plate_Type = src_plate_type}
-    else {pl$Src_Plate_Type = pl[[src_plate_type]]}
-    dplyr::mutate(pl, Src_Plate_Type = ifelse(Src_Plate_Type == "DMSO", "384PP_DMSO2",
-                                              ifelse(Src_Plate_Type == "Water", "384PP_AQ_GP3", Src_Plate_Type))) -> pl
+        pl$SrcPlateType = src_plate_type}
+    else {pl$SrcPlateType = pl[[src_plate_type]]}
+    dplyr::mutate(pl, SrcPlateType = ifelse(SrcPlateType == "DMSO", "384PP_DMSO2",
+                                     ifelse(SrcPlateType == "Water", "384PP_AQ_GP3",
+                                     ifelse(SrcPlateType == "LDV", "384LDV_DMSO", SrcPlateType)))) -> pl
 
     if(length(xfer_vol) == nrow(pl)){
-        pl$Transfer_Volume = 2.5 * round(xfer_vol/2.5)} #Convert to multiples of 2.5 nL
+        pl$XferVol = 2.5 * round(xfer_vol/2.5)} #Convert to multiples of 2.5 nL
     else if(length(xfer_vol) == 1){
             if( ! xfer_vol %in% names(map)){
-                pl$Transfer_Volume = 2.5 * round(xfer_vol/2.5)} #Convert to multiples of 2.5 nL
-            else {pl$Transfer_Volume = 2.5 * round(map[[xfer_vol]] / 2.5)}
+                pl$XferVol = 2.5 * round(xfer_vol/2.5)} #Convert to multiples of 2.5 nL
+            else {pl$XferVol = 2.5 * round(map[[xfer_vol]] / 2.5)}
         }
     else {stop("Number of volume values does not match number of samples")}
                
-    pl$Src_Well = pl[[src_well]]
-    
-    pl = dplyr::filter(pl, Transfer_Volume > 2.4) #remove invalid volumes
-    pl = dplyr::select(pl, Src_Well, Src_Plate_Name, Src_Plate_Type, Transfer_Volume, Dest_Well, Dest_Plate_Name)
+    pl$SrcWell = pl[[src_well]]
+    pl$SampleName = apply(pl[variables], 1, paste, collapse = ' ') #get Sample name from input variable columns
+    pl$DestPlateBarcode = pl$DestPlateName
+    pl = dplyr::filter(pl, XferVol > 2.4) #remove invalid volumes
+    pl = dplyr::select(pl, SrcWell, SrcPlateName, SrcPlateType, SampleName, XferVol, DestWell, DestPlateName, DestPlateBarcode)
     if(nrow(pl) < nrow(map)){
         warning("Volumes below 1.25 nL were removed")}
     return(pl)
 }
-

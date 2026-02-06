@@ -18,22 +18,22 @@
 
 #Create picklist for desired variable(s)
 backfill <- function(pl, backfill_wells,
-                     src_plate_name = "Src_Plate_Name", #Name of column containing plate name, if only 1 source plate is used, or name of Control plate if many
-                     xfer_vol = "Transfer_Volume",
-                     src_well = "Src_Well"){
+                     src_plate_name = "SrcPlateName", #Name of column containing plate name, if only 1 source plate is used, or name of Control plate if many
+                     xfer_vol = "XferVol",
+                     src_well = "SrcWell"){
     maxvol = max(pl[[xfer_vol]])
     pl2 = pl
     pl2[[xfer_vol]] = maxvol - pl2[[xfer_vol]]
     pl2 = pl2[pl2[[xfer_vol]] > 2.4,]
     pl2[[src_well]] = rep_len(backfill_wells, length.out=nrow(pl2))
 
-    if (src_plate_name == "Src_Plate_Name"){ #Little loop to keep default source plate name
+    if (src_plate_name == "SrcPlateName"){ #Little loop to keep default source plate name
         if(length(unique(pl[[src_plate_name]])) == 1){
-            pl2$Src_Plate_Name = unique(pl[[src_plate_name]])}
+            pl2$SrcPlateName = unique(pl[[src_plate_name]])}
         else {stop("Multiple Source Plates given but none specified")}
     }
-    else{ pl2$Src_Plate_Name = src_plate_name} # But to allow specifying a control source plate                        
-    #pl2 = rbind(pl, pl2)
+    else{ pl2$SrcPlateName = src_plate_name} # But to allow specifying a control source plate                        
+    pl2 = rbind(pl, pl2)
     return(pl2)
 }
 

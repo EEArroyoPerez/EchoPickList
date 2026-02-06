@@ -1,6 +1,6 @@
 Package: EchoPickList
 Title: A package to design microplate experiments and to generate picklist for use with the Echo acoustic dispenser
-Version: 0.0.0.9000
+Version: 1.2.0
 Authors@R: 
     person("Erick", "Arroyo-Perez", , "erickarroyo1312@protonmail.com", role = c("aut", "cre"))
 Description: Contains functions to design microplate experiments with combinatorial conditions that can be added as a solution with the Echo acoustic dispenser, as well as functions to generate picklist ready to use with the Beckman Echo software.
