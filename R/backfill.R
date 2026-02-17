@@ -33,7 +33,7 @@ backfill <- function(pl, backfill_wells,
         else {stop("Multiple Source Plates given but none specified")}
     }
     else{ pl2$SrcPlateName = src_plate_name} # But to allow specifying a control source plate                        
-    pl2 = rbind(pl, pl2)
+ #   pl2 = rbind(pl, pl2)
     return(pl2)
 }
 
