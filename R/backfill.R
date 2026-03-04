@@ -20,7 +20,8 @@
 backfill <- function(pl, backfill_wells,
                      src_plate_name = "SrcPlateName", #Name of column containing plate name, if only 1 source plate is used, or name of Control plate if many
                      xfer_vol = "XferVol",
-                     src_well = "SrcWell"){
+                     src_well = "SrcWell",
+                     backfill_fluid = NA){
     maxvol = max(pl[[xfer_vol]])
     pl2 = pl
     pl2[[xfer_vol]] = maxvol - pl2[[xfer_vol]]
@@ -33,7 +34,7 @@ backfill <- function(pl, backfill_wells,
         else {stop("Multiple Source Plates given but none specified")}
     }
     else{ pl2$SrcPlateName = src_plate_name} # But to allow specifying a control source plate                        
- #   pl2 = rbind(pl, pl2)
+    pl2$SampleName <- backfill_fluid
     return(pl2)
 }
 
