@@ -4,7 +4,7 @@
 \alias{chk_vol}
 \title{chk_vol}
 \usage{
-chk_vol(pl)
+chk_vol(pl, plate_col = "SrcPlateName", sample_col = "SampleName")
 }
 \arguments{
 \item{pl}{Picklist table. The names of the columns are assumed to be "Src_Well" and "Transfer_Volume"}

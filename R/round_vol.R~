@@ -27,8 +27,6 @@
 #' @importFrom magrittr %>%
 #'
 #' @examples
-#' 
-#' testmath(4)
 #'
 
 picklist <- function(map, #plate map

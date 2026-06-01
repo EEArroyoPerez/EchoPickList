@@ -9,8 +9,8 @@ picklist(
   src_plate,
   xfer_vol,
   variables,
-  dest_plate = "Dest_Plate_Name",
-  src_plate_name = "Src_Plate_Name",
+  dest_plate = "DestPlateName",
+  src_plate_name = "SrcPlateName",
   src_plate_type = "DMSO",
   src_well = "Well"
 )
@@ -44,4 +44,5 @@ Generates a picklist from an experiment map and a source plate map, for use in t
 \examples{
 
 testmath(4)
+
 }

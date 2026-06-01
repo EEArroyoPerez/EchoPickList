@@ -17,5 +17,10 @@ Arroyo-Perez, EE. UdeM, 2025
 \author{
 \strong{Maintainer}: Erick Arroyo-Perez \email{erickarroyo1312@protonmail.com}
 
+Authors:
+\itemize{
+  \item Erick Arroyo-Perez \email{erickarroyo1312@protonmail.com}
+}
+
 }
 \keyword{internal}

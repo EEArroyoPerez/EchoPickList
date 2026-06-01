@@ -7,9 +7,10 @@
 backfill(
   pl,
   backfill_wells,
-  src_plate_name = "Src_Plate_Name",
-  xfer_vol = "Transfer_Volume",
-  src_well = "Src_Well"
+  src_plate_name = "SrcPlateName",
+  xfer_vol = "XferVol",
+  src_well = "SrcWell",
+  backfill_fluid = NA
 )
 }
 \arguments{
