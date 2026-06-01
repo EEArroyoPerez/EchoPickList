@@ -16,7 +16,7 @@
 round_vol <- function(vol,
                       droplet = 2.5){
     vol2 = 2.5 * round(vol/2.5)
-    if(sum(vol2) > 0){
+    if(sum(vol2 == 0) > 0){
         warning("Some volumes were rounded down to 0")}
     return(vol2)
 }
