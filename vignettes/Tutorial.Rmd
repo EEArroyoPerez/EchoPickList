@@ -36,7 +36,7 @@ Add control across a subset of the variables with `add_ctrl` \
 ## Installation
 
 You can install the package from github from R by running
-```{r echo = , results = 'hide'}
+```{r echo = T, results = 'hide'}
 
 pak::pak("EEArroyoPerez/EchoPickList")
 
@@ -181,8 +181,6 @@ You should always check that the total transfer volume for each source well does
 chk_vol(pl_ab) %>%
     print(n= nrow(.)) #Add this line to print every line in the table for inspection
 
-?picklist
-
 chk_vol(pl_s)
 
 ```
@@ -228,7 +226,8 @@ You can design an experiment with a spreadsheet editor in a plate matrix format,
 
 ```{r}
 
-map <- plater::read_plate("ordered_exp_map.csv")
+filepath <- system.file("ordered_exp_map.csv", package = "EchoPickList")
+map <- plater::read_plate(filepath)
 map
 
 ```
@@ -242,8 +241,8 @@ plater::view_plate(map, "Wells", c("Antibiotic", "Volume"))
 ```
 
 In order to pass it to `picklist`, you need to  
- - Rename the "Wells" column to "Well"
- - Remove the padding 0s from the well-name format
+ -  Rename the "Wells" column to "Well"  
+ -  Remove the padding 0s from the well-name format
 
 The functions `pad_well` and `unpad_well` are used to switch between well-name formats
 
@@ -257,6 +256,10 @@ picklist(map, abs, "Volume", "Antibiotic")
 
 
 ```
+
+You can export the picklist as explained above.
+
+By designing your experiment in this manner, you will also have the map already in a table format in R, which you can later use to annotate your results for analysis.
 
 ## Session info
 

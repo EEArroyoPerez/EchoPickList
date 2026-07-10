@@ -10,11 +10,17 @@ Roxygen: list(markdown = TRUE)
 Imports: 
     dplyr,
     magrittr,
-    tidyr
+    tidyr,
+    plater
 Suggests: 
     knitr,
     rmarkdown,
+    dplyr,
+    tidyr,
+    plater,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.0.0
 VignetteBuilder: knitr
+Vignettes:
+    Tutorial: Designing experiments with EchoPickList (\code{Tutorial.Rmd})
