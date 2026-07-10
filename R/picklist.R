@@ -26,11 +26,7 @@
 #'
 #' @importFrom magrittr %>%
 #'
-#' @examples
 #' 
-#' testmath(4)
-#'
-
 picklist <- function(map, #plate map
                      src_plate,
                      xfer_vol, #Name of 'Transfer Volume' column in map,
@@ -43,24 +39,24 @@ picklist <- function(map, #plate map
                      src_well = "Well" #
                      ){
   dplyr::mutate(map, DestWell = Well) %>%
-        dplyr::select(all_of(variables), DestWell) %>%
+        dplyr::select(tidyr::all_of(variables), DestWell) %>%
         dplyr::left_join(src_plate, by = variables, relationship = "many-to-many") -> pl
 
     if (nrow(pl) > nrow(map)) { #Check if source samples have multiple wells assigned
         warning("Some source variables have multiple wells; Corresponding Source Wells were evenly distributed")
         
         dplyr::mutate(map, DestWell = Well) %>%
-            dplyr::select(all_of(variables), DestWell) %>%  
-            group_by_at(variables) %>%
-            mutate(row_idx = row_number()) %>%
-            left_join(src_plate %>% 
-                      group_by_at(variables) %>%
-                      mutate(source_idx = row_number()), 
+            dplyr::select(tidyr::all_of(variables), DestWell) %>%  
+            dplyr::group_by_at(variables) %>%
+            dplyr::mutate(row_idx = dplyr::row_number()) %>%
+            dplyr::left_join(src_plate %>% 
+                      dplyr::group_by_at(variables) %>%
+                      dplyr::mutate(source_idx = dplyr::row_number()), 
                       by = variables, relationship = "many-to-many") %>%
-            mutate(match_idx = (row_idx - 1) %% n_distinct(source_idx) + 1) %>% #Distribute redundant source wells among the destination wells
-            filter(source_idx == match_idx) %>%
-            ungroup()%>%
-            select(!c(row_idx, source_idx, match_idx)) -> pl
+            dplyr::mutate(match_idx = (row_idx - 1) %% dplyr::n_distinct(source_idx) + 1) %>% #Distribute redundant source wells among the destination wells
+            dplyr::filter(source_idx == match_idx) %>%
+            dplyr::ungroup()%>%
+            dplyr::select(!c(row_idx, source_idx, match_idx)) -> pl
     }
     
     if( ! dest_plate %in% names(map)){ 

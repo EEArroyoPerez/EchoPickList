@@ -1,0 +1,265 @@
+---
+title: "Tutorial"
+author: Erick Arroyo Pérez
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(EchoPickList)
+```
+
+
+
+This package contains functions to help design microplate experiments with combinations of multiple variables, wiht randomized well location.
+The picklist exporting functions can also be used with experiments designed with other software.
+
+## TL;DR
+Define variables and variable levels for your experiment \
+Create a Destination Plate map with `map_exp` \
+Import or define Source Plate maps \
+Create ready-to-use picklists with `picklist` \
+Add backfill volume with `backfill` \
+Add control across a subset of the variables with `add_ctrl` \
+
+## Installation
+
+You can install the package from github from R by running
+```{r echo = , results = 'hide'}
+
+pak::pak("EEArroyoPerez/EchoPickList")
+
+```
+
+## Design an experiment with randomized-positions
+
+First you define the variables to include. Let's say you want to do:  
+ - 	5-concentration dose-response curve  
+ -	3 antibiotics  
+ - 	in 2 different strains  
+ -	with 3 biological replicates  
+
+```{r}
+
+Antibiotic = c("Amp", "Cm", "Cipro")
+Concentration = exp(seq(log(0.5), log(50), length = 5)) # this formula generates a series of 5 numbers, frorm 0.5 to 50, logarithmically equidistant
+Strain = c("WT", "tolC")
+Replicate = c(1:3)
+```
+
+Then define the area of the plate to use, by defining the columns and rows. For 384-well plates, it's a good idea to leave out at least one row on the edge, if possible two
+
+```{r}
+cols = c(3:22)
+rows = c(3:14)
+```
+
+Now let's design the experiment plate map
+
+Load the libraries 
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(EchoPickList)
+
+```
+
+The function `map_exp` takes the plate area definition, and any vector of variables to include in your experiment. You have to explicitly specify the random seed, for reproducible randomization.
+
+```{r}
+map <- map_exp(cols, rows, Antibiotic, Concentration, Strain, Replicate, seed =34)
+```
+
+The resulting table contains all combinations of the elements of the vector. A final column is added, with the list of wells randomly selected from the area defined with `rows` and `cols`
+
+```{r}
+map
+```
+
+If you want you can visualize any element of the map in plate format with the package `plater`
+```{r}
+plater::view_plate(map, well_ids_column ="Well", columns_to_display=c("Strain", "Antibiotic"), plate_size = 384)
+
+```
+
+## Define Source Plates
+
+We have just designed the map of the *Destination Plate*. We need to define the map of the *Source Plate*. For liquids that you use regularly, this could be a .csv file. For this example, we will generate it in line
+
+
+```{r}
+#A plate for the antibiotics
+
+abs <- data.frame(Antibiotic,
+                  Well = paste0(LETTERS[1:3], 2), #Generate vector of well names in column 2
+                  Solvent = c("Water", "DMSO", "DMSO"))
+
+# A plate for the strains
+strns <- crossing(Strain, Replicate)
+strns$Well <- paste0(LETTERS[c(1:nrow(strns))], 23)
+
+abs
+strns
+```
+The function `tidyr::crossing` helps generate the combinations of two variables, since in this case we want 3 replicates for each strain
+
+
+## Generate picklists
+
+The function `picklist` is intended to generate lists ready to use with the Echo acoustic dispenser. It needs the destination plate map, the source plate map, the volume to dispense and the variable(s) by which to join the maps.
+
+Let's make a picklist to dispense the strains, setting 100 nL for all of them
+
+```{r}
+
+pl_s <- picklist(map, strns, #destination and source plate maps
+                 100, #Volume to dispense
+                 c("Strain", "Replicate"), #Variables to join maps by
+                 src_plate_type = "Water") #Fluid type of the source plate
+pl_s
+```
+
+You can specify Destination and Source plate names, and if not it will fill up the columns with a default value. Most importantly, by default the Source Plate Type is '384PP_DMSO2', which is why here we have to specify that all the Strains are in "Water" (for now, only "Water", "DMSO" and "LDV" 384-well plate types are supported).
+
+You can also use vectors or functions to define values in the picklist.
+
+To dispense the antibiotics in our example:  
+ -	Each well requires a different volume of antibiotic, which is a function of the antibiotic, the stock concentration and the assay volume  
+ -	Each antibiotic is dissolved in a different liquid, which requires a different plate definition  
+	
+
+```{r}
+V = 50000 #assay volume, in nL 
+C = 10000 #Stock concentration, in μM, assuming all antibiotics have the same concentration
+pl_ab <- picklist(map, abs,
+                  map$Concentration * V / C, #Define volume based on column in Destination Plate
+                  "Antibiotic", 
+                  src_plate_type = "Solvent" )#Define plate type based on column in Source Plate
+
+```
+this function by default converts the volume to multiples of 2.5, and removes any 0s.
+
+
+## Add back-fill volume
+
+For a dose-response experiment with DMSO, you might want to back-fill the wells to keep the concentration of DMSO constant.
+
+```{r}
+Wells = paste0("P", c(1:3))#Define wells in your source plate with backfill volume
+backfill(pl_ab, #Picklist to backfill
+         Wells, #Wells in sourceplate to draw backfill fluid from
+         backfill_fluid = "DMSO") #Sample Name of the backfill fluid
+```
+The result is the list of wells below maximum transfer volume, with coordinates to transfer backfill fluid up to the maximum transfer volume in the picklist.
+
+For this experiment, you probably want to do that just with the DMSO compounds
+```{r}
+
+pl_ab <- pl_ab %>%
+    filter(SrcPlateType == "384PP_DMSO2") %>%  #Select DMSO only from pl for backfill
+    backfill(Wells, backfill_fluid = "DMSO") %>%
+    bind_rows( pl_ab) # Add Water wells
+
+```
+
+You should always check that the total transfer volume for each source well does not exceed what you can dispense in a single run. For a 384PP source plate, that's 40 μL if you fill up 60 μL. You can check this with the function `chk_vol`
+
+```{r}
+
+chk_vol(pl_ab) %>%
+    print(n= nrow(.)) #Add this line to print every line in the table for inspection
+
+?picklist
+
+chk_vol(pl_s)
+
+```
+You can use this summary to inspect that there were no errors when assigning well and sample names. You can also use this list to guide you when preparing the source plates.
+
+
+Now you can export the picklists. Make sure to indicate `quote = F`, so that the Echo software can read them.
+
+
+```{r}
+write.csv(pl_ab, "abs.pl.csv", quote =F)
+write.csv(pl_s, "strains.pl.csv", quote =F)
+
+```
+
+The columns in the exported files are parsed automatically by the Beckmann software.
+
+
+## Add a control across a subset of a variable
+
+Sometimes you want to add a control across only some levels of a variable.
+
+In this example, we should add a negative control, but it doesn't need to be at every Concentration.
+
+The function `add_ctrl` takes a previously generated experiment map, and specific values of the defined variables. It will then shuffle the remaining empty wells in the plate with the combinations of the variables you just defined, and the remaining variables in the experiment that you didn't specify.
+
+```{r}
+add_ctrl(map, rows, cols, Antibiotic = c("Water", "DMSO"), Concentration = max(Concentration))
+```
+
+You would need to include "Water" and "DMSO" in your Antibiotic source plate to generate the picklist, for example:
+
+```{r}
+abs <- abs %>%
+    add_row(Antibiotic = "Water", Well = "D2", Solvent = "Water")
+```
+
+## Importing map from external sources
+
+Sometimes you don't want to randomize the position of every variable. In that case, you might want to import an experiment design from external sources.
+
+You can design an experiment with a spreadsheet editor in a plate matrix format, and use the package `plater` to import it as a table. Check the documentation on that package for an explanation of the format required, or look at the example plate:
+
+```{r}
+
+map <- plater::read_plate("ordered_exp_map.csv")
+map
+
+```
+
+In this example we want to test if ciprofloxacin affects the potency of two antibiotics, and it's layed out as a 96-well plate. Again, you can visualize the layout with `plater`
+
+```{r}
+
+plater::view_plate(map, "Wells", c("Antibiotic", "Volume"))
+
+```
+
+In order to pass it to `picklist`, you need to  
+ - Rename the "Wells" column to "Well"
+ - Remove the padding 0s from the well-name format
+
+The functions `pad_well` and `unpad_well` are used to switch between well-name formats
+
+```{r}
+
+map <- map %>%
+    mutate(Well = unpad_well(Wells)) %>% #Create a new column called "Well"
+    select(!Wells) #Remove the original "Wells" column
+
+picklist(map, abs, "Volume", "Antibiotic")
+
+
+```
+
+## Session info
+
+```{r}
+sessionInfo()
+```

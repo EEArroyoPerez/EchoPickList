@@ -15,8 +15,8 @@
 #' testmath(4)
 #'
 chk_vol <- function(pl, plate_col = "SrcPlateName", sample_col = "SampleName"){
-    group_by_at(pl, c("SrcWell", plate_col, sample_col )) %>%
-        summarise(total = sum(XferVol))   
+    dplyr::group_by_at(pl, c("SrcWell", plate_col, sample_col )) %>%
+        dplyr::summarise(total = sum(XferVol))   
 }
 
 

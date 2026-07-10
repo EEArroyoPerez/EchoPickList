@@ -10,7 +10,7 @@
 #'
 #' @examples
 #'
-#' testmath(4)
+#' pad_well("A9")
 
 pad_well <- function(Well){   #Add padding 0 to make all well names the same length
     col = gsub("\\D", "", Well)

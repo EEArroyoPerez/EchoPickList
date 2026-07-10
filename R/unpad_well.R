@@ -10,7 +10,7 @@
 #'
 #' @examples
 #'
-#' testmath(4)
+#' unpad_well("A09")
 
 unpad_well <- function(Well) {    #Remove padding zeros
     col = as.numeric(gsub("\\D", "", Well))

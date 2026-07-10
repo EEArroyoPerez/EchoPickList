@@ -15,8 +15,7 @@
 #' @importFrom magrittr %>%
 #'
 #' @examples
-#'
-#' testmath(4)
+#' map_exp(cols = 2:23, rows = 2:15, Treatment = c("A", "B", "C"), Concentration = c(1, 5, 10), seed = 2)
 
 map_exp <- function(cols, rows, ..., seed){
     map = tidyr::crossing(...)

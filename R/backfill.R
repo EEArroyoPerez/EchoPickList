@@ -8,14 +8,17 @@
 #' 
 #' @param src_plate_name Name of source plate containing the back-fill fluid, in case multiple source plates were used to generate the picklist
 #'
+#' @param xfer_vol = Name of the Volume column in picklist
+#'
+#' @param src_well = Name of the Well column in the source plate
+#'
+#' @param backfill_fluid = Name of the backfill fluid, to be assigned as the SampleName of the backfill_wells
+#'
 #' @return A tibble containing back-filling coordinates for the picklist provided, bringing every well to the maximum volume in the picklist.
 #'
 #' @export
 #'
-#' @examples
-#'
-#' testmath(4)
-
+#' 
 #Create picklist for desired variable(s)
 backfill <- function(pl, backfill_wells,
                      src_plate_name = "SrcPlateName", #Name of column containing plate name, if only 1 source plate is used, or name of Control plate if many

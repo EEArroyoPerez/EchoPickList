@@ -18,10 +18,7 @@
 #'
 #' @importFrom magrittr %>%
 #'
-#' @examples
 #'
-#' testmath(4)
-
 add_ctrl <- function(map, cols, rows, ..., seed = 3) { 
     tidyr::crossing(rows =LETTERS[rows], cols) %>% #Generate list of wells available in the plate
         dplyr::mutate(Well = paste0(rows, cols)) %>% dplyr::select(Well) %>%
