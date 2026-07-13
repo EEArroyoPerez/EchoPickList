@@ -35,7 +35,7 @@ Add control across a subset of the variables with `add_ctrl` \
 You can install the package from github from R by running
 ```{r echo = T, results = 'hide'}
 
-pak::pak("EEArroyoPerez/EchoPickList")
+devtools::install_github("EEArroyoPerez/EchoPickList", build_vignettes = TRUE)
 
 ```
 
