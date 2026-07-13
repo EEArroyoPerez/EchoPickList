@@ -23,7 +23,3 @@ The input map tibble, with the additional wells appended at the bottom.
 \description{
 Add wells to an experiment map over a subset of the variables in the original. Useful for adding controls, or additional independent experiments.
 }
-\examples{
-
-testmath(4)
-}

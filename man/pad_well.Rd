@@ -17,5 +17,5 @@ Add padding zeroes to a well name. Useful for compatibility with tables generate
 }
 \examples{
 
-testmath(4)
+pad_well("A9")
 }

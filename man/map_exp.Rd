@@ -22,6 +22,5 @@ A tibble containing all possible combinations of the Variables in the input, and
 Generates a plate map for an experiment with all combinations of the defined variables, randomly assigned to the plate positions indicated in a defined area.
 }
 \examples{
-
-testmath(4)
+map_exp(cols = 2:23, rows = 2:15, Treatment = c("A", "B", "C"), Concentration = c(1, 5, 10), seed = 2)
 }

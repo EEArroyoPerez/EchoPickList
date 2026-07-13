@@ -1,7 +1,5 @@
 ---
 title: "Tutorial"
-author: Erick Arroyo Pérez
-date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Tutorial}
@@ -13,13 +11,12 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
+  )
+
+withr::local_envvar(
+  R_USER_CACHE_DIR = tempfile() # This is for pak to store the package in tmp folder during rendering
 )
 ```
-
-```{r setup}
-library(EchoPickList)
-```
-
 
 
 This package contains functions to help design microplate experiments with combinations of multiple variables, wiht randomized well location.

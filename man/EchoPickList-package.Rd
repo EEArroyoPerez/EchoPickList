@@ -4,9 +4,9 @@
 \name{EchoPickList-package}
 \alias{EchoPickList}
 \alias{EchoPickList-package}
-\title{EchoPickList: A package to design microplate experiments and to generate picklist for use with the Echo acoustic dispenser}
+\title{EchoPickList: What the Package Does (One Line, Title Case)}
 \description{
-Contains functions to design microplate experiments with combinatorial conditions that can be added as a solution with the Echo acoustic dispenser, as well as functions to generate picklist ready to use with the Beckman Echo software.
+What the package does (one paragraph).
 }
 \details{
 This package provides functions to design combinatorial experiments in microplates, and to export the tabels as csv picklists for use with the Echo acoustic dispenser.
@@ -15,11 +15,11 @@ This package provides functions to design combinatorial experiments in microplat
 Arroyo-Perez, EE. UdeM, 2025
 }
 \author{
-\strong{Maintainer}: Erick Arroyo-Perez \email{erickarroyo1312@protonmail.com}
+\strong{Maintainer}: First Last \email{first.last@example.com}
 
 Authors:
 \itemize{
-  \item Erick Arroyo-Perez \email{erickarroyo1312@protonmail.com}
+  \item First Last \email{first.last@example.com}
 }
 
 }

@@ -17,5 +17,5 @@ Remove padding zeroes from a well name. Useful for compatibility with tables gen
 }
 \examples{
 
-testmath(4)
+unpad_well("A09")
 }

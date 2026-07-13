@@ -41,8 +41,3 @@ A tibble containing all possible combinations of the Variables in the input, and
 \description{
 Generates a picklist from an experiment map and a source plate map, for use in the Beckmann Echo software suite
 }
-\examples{
-
-testmath(4)
-
-}
